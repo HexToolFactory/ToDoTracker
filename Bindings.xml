@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="TODOTRACKER_QUICKADD" header="TODOTRACKER" category="ADDONS">
+		TodoTracker_ShowQuickAdd()
+	</Binding>
+</Bindings>

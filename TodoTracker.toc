@@ -1,0 +1,10 @@
+## Interface: 20506
+## Title: Todo Tracker
+## Notes: Small ToDo list in the style of the Questie tracker (plus button or Alt+D to add)
+## Author: HexToolFactory
+## Version: @project-version@
+## SavedVariablesPerCharacter: TodoTrackerDB
+## X-Curse-Project-ID: REPLACE_WITH_CURSEFORGE_PROJECT_ID
+
+Bindings.xml
+TodoTracker.lua
