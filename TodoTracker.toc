@@ -4,7 +4,7 @@
 ## Author: HexToolFactory
 ## Version: @project-version@
 ## SavedVariablesPerCharacter: TodoTrackerDB
-## X-Curse-Project-ID: REPLACE_WITH_CURSEFORGE_PROJECT_ID
+## X-Curse-Project-ID: 1644679
 
 Bindings.xml
 TodoTracker.lua
