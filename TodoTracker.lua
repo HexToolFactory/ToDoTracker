@@ -258,6 +258,18 @@ local quickLabel = quickFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 quickLabel:SetPoint("TOPLEFT", 12, -8)
 quickLabel:SetText(GOLD .. "New ToDo" .. R)
 
+-- Option: close the dialog right after Enter (default: stay open so several
+-- ToDos can be entered in a row). Saved per character in DB.closeOnEnter.
+local closeCheck = CreateFrame("CheckButton", nil, quickFrame, "UICheckButtonTemplate")
+closeCheck:SetSize(20, 20)
+closeCheck:SetPoint("TOPRIGHT", -8, -4)
+closeCheck.text = closeCheck:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+closeCheck.text:SetPoint("RIGHT", closeCheck, "LEFT", -2, 0)
+closeCheck.text:SetText(GREY .. "close on Enter" .. R)
+closeCheck:SetScript("OnClick", function(self)
+    if DB then DB.closeOnEnter = self:GetChecked() and true or false end
+end)
+
 local quickEdit = CreateFrame("EditBox", nil, quickFrame, "InputBoxTemplate")
 quickEdit:SetHeight(20)
 quickEdit:SetPoint("TOPLEFT", 16, -24)
@@ -271,12 +283,17 @@ local function CloseQuickAdd()
     quickFrame:Hide()
 end
 
--- Enter adds the ToDo and only clears the field -- this way several
--- ToDos can be entered in a row; the dialog closes only on Escape
+-- Enter adds the ToDo. By default the field is only cleared so several
+-- ToDos can be entered in a row (Escape closes); with "close on Enter"
+-- enabled the dialog closes immediately.
 quickEdit:SetScript("OnEnterPressed", function(self)
     local text = self:GetText():gsub("^%s+", ""):gsub("%s+$", "")
     if text ~= "" then AddTodo(text) end
-    self:SetText("")
+    if DB and DB.closeOnEnter then
+        CloseQuickAdd()
+    else
+        self:SetText("")
+    end
 end)
 quickEdit:SetScript("OnEscapePressed", CloseQuickAdd)
 quickEdit:HookScript("OnEditFocusLost", function()
@@ -297,6 +314,7 @@ end)
 -- Global: called by the key binding (Bindings.xml)
 function TodoTracker_ShowQuickAdd()
     if not DB then return end  -- not ready before ADDON_LOADED
+    closeCheck:SetChecked(DB.closeOnEnter and true or false)
     quickFrame:Show()
     quickEdit:SetText("")
     quickEdit:SetFocus()
@@ -314,6 +332,10 @@ local function PrintHelp()
     line(GOLD .. " - /todo" .. R .. WHITE .. " or " .. GOLD .. "Alt+D" .. R .. WHITE ..
         " -- open the centered quick-add (Enter adds, Escape closes)" .. R)
     line(GOLD .. " - /todo help" .. R .. WHITE .. " -- show this help" .. R)
+    line(GOLD .. " - /todo closeonenter on|off" .. R .. WHITE ..
+        " -- close the quick-add dialog right after Enter (default: stays open)" .. R)
+    line(GOLD .. " - /todo export on|off" .. R .. WHITE ..
+        " -- pixel export for companion apps (top-left colour strip)" .. R)
     line(GREY .. " In the window:" .. R)
     line(WHITE .. " - " .. GOLD .. "Plus button" .. R .. WHITE ..
         " next to the title -- inline input for adding" .. R)
@@ -334,6 +356,14 @@ SlashCmdList["TODOTRACKER"] = function(msg)
         PrintHelp()
     elseif cmd == "add" and rest ~= "" then
         if DB then AddTodo(rest) end
+    elseif cmd == "closeonenter" then
+        if DB then
+            rest = rest:lower()
+            if rest == "on" then DB.closeOnEnter = true
+            elseif rest == "off" then DB.closeOnEnter = false end
+            DEFAULT_CHAT_FRAME:AddMessage(GOLD .. "Todo Tracker" .. R .. WHITE .. " close quick-add on Enter: " ..
+                (DB.closeOnEnter and "|cFF00FF00on|r" or "|cFFFF4040off|r") .. R)
+        end
     elseif cmd == "" then
         TodoTracker_ShowQuickAdd()
     else

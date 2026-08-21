@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Option "close on Enter" for the quick-add dialog (checkbox in the dialog, `/todo closeonenter on|off`)
+- Pixel export of the ToDo list (top-left colour strip) for companion apps; `/todo export on|off`
+
 ## v1.0.0
 
 - Initial release
