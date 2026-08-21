@@ -6,18 +6,21 @@
 -- Wire format (bytes): "TD" | version(1) | seq(2) | payloadLen(2) | crc8(1)
 --                      | nameLen(1) name | realmLen(1) realm | count(1)
 --                      | per todo: flags(1, bit0 = done) | textLen(1) | text
--- Bytes are split into 4-bit nibbles; every block carries 3 nibbles as
--- R/G/B with 16 levels. The strip starts with a CALIBRATION RAMP of 16
--- grey blocks (level 0..15) so the reader can learn how the display/HDR
--- gamma maps each level instead of assuming linear 0, 17, 34, ... 255.
+-- Bytes are split into base-4 digits (4 per byte); every block carries 3
+-- digits as R/G/B using only 4 brightness LEVELS (0.10 .. 0.52, never pure
+-- black). Real displays apply gain/gamma/HDR mapping (measured: x1.9 with
+-- clipping above ~0.5), so 16 levels are not distinguishable everywhere;
+-- 4 well-spaced levels survive. The strip starts with a CALIBRATION RAMP
+-- of the 4 grey levels so the reader can learn the actual mapping.
 -- Blocks are BLOCK_PX physical pixels wide/high.
 
 local BLOCK_PX = 4         -- physical pixels per block
 local COLS = 128           -- blocks per row (512 px wide at BLOCK_PX = 4)
 local MAX_ROWS = 8
 local MAX_TEXT = 80        -- bytes per ToDo text
-local VERSION = 2          -- 2 = with calibration ramp
-local RAMP = 16            -- calibration blocks before the data
+local VERSION = 3          -- 3 = base-4 digits, 4 levels, 4-block calibration ramp
+local LEVELS = { 0.10, 0.24, 0.38, 0.52 }
+local RAMP = #LEVELS       -- calibration blocks before the data
 local TICK = 1.0           -- seconds between change checks
 
 local exportFrame = CreateFrame("Frame", "TodoTrackerExportFrame", UIParent)
@@ -71,15 +74,17 @@ end
 
 local function Render(payload)
     local blob = "TD" .. string.char(VERSION) .. U16(seq) .. U16(#payload) .. string.char(Crc8(payload)) .. payload
-    -- bytes -> nibbles -> blocks (3 nibbles each)
-    local nibbles = {}
+    -- bytes -> base-4 digits -> blocks (3 digits each)
+    local digits = {}
     for i = 1, #blob do
         local b = blob:byte(i)
-        nibbles[#nibbles + 1] = bit.rshift(b, 4)
-        nibbles[#nibbles + 1] = bit.band(b, 0x0F)
+        digits[#digits + 1] = bit.band(bit.rshift(b, 6), 3)
+        digits[#digits + 1] = bit.band(bit.rshift(b, 4), 3)
+        digits[#digits + 1] = bit.band(bit.rshift(b, 2), 3)
+        digits[#digits + 1] = bit.band(b, 3)
     end
-    while #nibbles % 3 ~= 0 do nibbles[#nibbles + 1] = 0 end
-    local nBlocks = RAMP + #nibbles / 3
+    while #digits % 3 ~= 0 do digits[#digits + 1] = 0 end
+    local nBlocks = RAMP + #digits / 3
     local rows = math.ceil(nBlocks / COLS)
     if rows > MAX_ROWS then return false end
     local size = BlockSize()
@@ -95,11 +100,11 @@ local function Render(payload)
         tex:SetPoint("TOPLEFT", exportFrame, "TOPLEFT", col * size, -row * size)
         tex:SetSize(size, size)
         if b <= RAMP then
-            local g = (b - 1) / 15
+            local g = LEVELS[b]
             tex:SetColorTexture(g, g, g, 1)      -- calibration ramp
         else
             local n = (b - RAMP - 1) * 3
-            tex:SetColorTexture(nibbles[n + 1] / 15, nibbles[n + 2] / 15, nibbles[n + 3] / 15, 1)
+            tex:SetColorTexture(LEVELS[digits[n + 1] + 1], LEVELS[digits[n + 2] + 1], LEVELS[digits[n + 3] + 1], 1)
         end
         tex:Show()
     end
