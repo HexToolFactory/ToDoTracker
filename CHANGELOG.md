@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Quick-add now asks "Add several ToDos in a row?" (Enter = stays open until Esc, Esc = one ToDo and close); `/todo ask on|off`
+- Alt+D now adds a single ToDo (Enter adds and closes); new **Alt+Shift+D** / `/todo multi` keeps the dialog open for several ToDos (Esc closes)
 - Pixel export of the ToDo list (top-left colour strip) for companion apps; `/todo export on|off`
 
 ## v1.0.0

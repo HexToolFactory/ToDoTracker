@@ -18,6 +18,7 @@ local TITLE_HEIGHT = 24
 -- Labels for the key bindings UI (category ADDONS, see Bindings.xml)
 BINDING_HEADER_TODOTRACKER = "Todo Tracker"
 _G["BINDING_NAME_TODOTRACKER_QUICKADD"] = "Quick-add a ToDo"
+_G["BINDING_NAME_TODOTRACKER_QUICKADD_MULTI"] = "Quick-add several ToDos (stays open)"
 
 local DB  -- points to TodoTrackerDB after ADDON_LOADED
 local AddTodo, ToggleTodo, DeleteTodo, Redraw
@@ -310,51 +311,15 @@ local function OpenQuickAdd(several)
     C_Timer.After(0, function() suppressChar = false end)
 end
 
--- Prompt before the quick-add: "several ToDos?" -- Enter = yes (stays
--- open, Esc closes later), Esc = no (closes after the first ToDo).
-local promptFrame = CreateFrame("Frame", "TodoTrackerQuickPrompt", UIParent,
-    BackdropTemplateMixin and "BackdropTemplate")
-promptFrame:SetSize(320, 56)
-promptFrame:SetPoint("CENTER", 0, 150)
-promptFrame:SetFrameStrata("DIALOG")
-promptFrame:SetBackdrop({
-    bgFile = "Interface\\Buttons\\WHITE8X8",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    tile = true, edgeSize = 16,
-    insets = { left = 4, right = 4, top = 4, bottom = 4 },
-})
-promptFrame:SetBackdropColor(0, 0, 0, 0.85)
-promptFrame:SetBackdropBorderColor(1, 1, 1, 0.7)
-promptFrame:Hide()
-
-local promptTitle = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-promptTitle:SetPoint("TOPLEFT", 12, -10)
-promptTitle:SetText(GOLD .. "Add several ToDos in a row?" .. R)
-local promptHint = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-promptHint:SetPoint("TOPLEFT", 12, -30)
-promptHint:SetText(WHITE .. "Enter" .. R .. GREY .. " = yes (close with Esc later)   " .. R ..
-    WHITE .. "Esc" .. R .. GREY .. " = no, just one" .. R)
-
-promptFrame:EnableKeyboard(true)
-promptFrame:SetScript("OnKeyDown", function(self, key)
-    if key == "ENTER" or key == "ESCAPE" then
-        self:SetPropagateKeyboardInput(false)
-        self:Hide()
-        OpenQuickAdd(key == "ENTER")
-    else
-        self:SetPropagateKeyboardInput(true)  -- e.g. movement keys pass through
-    end
-end)
-
--- Global: called by the key binding (Bindings.xml) and /todo
-function TodoTracker_ShowQuickAdd()
+-- Globals: called by the key bindings (Bindings.xml) and /todo
+function TodoTracker_ShowQuickAdd()        -- Alt+D: one ToDo, closes after Enter
     if not DB then return end  -- not ready before ADDON_LOADED
-    if quickFrame:IsShown() then return end
-    if DB.askSeveral == false or InCombatLockdown() then
-        OpenQuickAdd(true)  -- no prompt: behave like before (stays open)
-    else
-        promptFrame:Show()
-    end
+    OpenQuickAdd(false)
+end
+
+function TodoTracker_ShowQuickAddMulti()   -- Alt+Shift+D: several, Esc closes
+    if not DB then return end
+    OpenQuickAdd(true)
 end
 
 ------------------------------------------------------------------------
@@ -365,10 +330,10 @@ local function PrintHelp()
     line(GOLD .. "Todo Tracker" .. R .. GREY .. " -- commands & usage:" .. R)
     line(GOLD .. " - /todo add <text>" .. R .. WHITE .. " -- add a new ToDo" .. R)
     line(GOLD .. " - /todo" .. R .. WHITE .. " or " .. GOLD .. "Alt+D" .. R .. WHITE ..
-        " -- quick-add: first asks 'several?' (Enter = stays open until Esc, Esc = one and close)" .. R)
+        " -- quick-add one ToDo (Enter adds and closes)" .. R)
     line(GOLD .. " - /todo help" .. R .. WHITE .. " -- show this help" .. R)
-    line(GOLD .. " - /todo ask on|off" .. R .. WHITE ..
-        " -- ask 'several ToDos?' when opening the quick-add (Enter = yes, Esc = no)" .. R)
+    line(GOLD .. " - /todo multi" .. R .. WHITE .. " or " .. GOLD .. "Alt+Shift+D" .. R .. WHITE ..
+        " -- quick-add several ToDos in a row (stays open, Esc closes)" .. R)
     line(GOLD .. " - /todo export on|off" .. R .. WHITE ..
         " -- pixel export for companion apps (top-left colour strip)" .. R)
     line(GREY .. " In the window:" .. R)
@@ -391,14 +356,8 @@ SlashCmdList["TODOTRACKER"] = function(msg)
         PrintHelp()
     elseif cmd == "add" and rest ~= "" then
         if DB then AddTodo(rest) end
-    elseif cmd == "ask" then
-        if DB then
-            rest = rest:lower()
-            if rest == "on" then DB.askSeveral = true
-            elseif rest == "off" then DB.askSeveral = false end
-            DEFAULT_CHAT_FRAME:AddMessage(GOLD .. "Todo Tracker" .. R .. WHITE .. " ask 'several ToDos?' on open: " ..
-                (DB.askSeveral ~= false and "|cFF00FF00on|r" or "|cFFFF4040off|r") .. R)
-        end
+    elseif cmd == "multi" then
+        TodoTracker_ShowQuickAddMulti()
     elseif cmd == "" then
         TodoTracker_ShowQuickAdd()
     else
@@ -416,6 +375,10 @@ local function TryAutoBind()
     if not GetBindingKey("TODOTRACKER_QUICKADD")
         and (action == "" or action == "KAMISAYOTODO_QUICKADD") then
         SetBinding("ALT-D", "TODOTRACKER_QUICKADD")
+        SaveBindings(GetCurrentBindingSet())
+    end
+    if not GetBindingKey("TODOTRACKER_QUICKADD_MULTI") and (GetBindingAction("ALT-SHIFT-D") or "") == "" then
+        SetBinding("ALT-SHIFT-D", "TODOTRACKER_QUICKADD_MULTI")
         SaveBindings(GetCurrentBindingSet())
     end
     return true
@@ -436,8 +399,8 @@ events:SetScript("OnEvent", function(self, event, arg1)
     elseif event == "PLAYER_LOGIN" then
         -- Auto-bind only once: if the user removes the binding later,
         -- that choice is respected
-        if DB and not DB.boundOnce then
-            DB.boundOnce = true
+        if DB and not DB.boundOnce2 then
+            DB.boundOnce, DB.boundOnce2 = true, true
             if not TryAutoBind() then
                 self:RegisterEvent("PLAYER_REGEN_ENABLED")
             end

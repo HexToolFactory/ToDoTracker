@@ -2,4 +2,7 @@
 	<Binding name="TODOTRACKER_QUICKADD" header="TODOTRACKER" category="ADDONS">
 		TodoTracker_ShowQuickAdd()
 	</Binding>
+	<Binding name="TODOTRACKER_QUICKADD_MULTI" category="ADDONS">
+		TodoTracker_ShowQuickAddMulti()
+	</Binding>
 </Bindings>

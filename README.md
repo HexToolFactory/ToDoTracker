@@ -5,7 +5,7 @@ A tiny per-character ToDo list for World of Warcraft, styled after the Questie t
 ## Features
 
 - Questie-tracker look: unobtrusive, highlights only on mouseover
-- Quick-add dialog via **Alt+D**: first asks *Add several ToDos in a row?* — **Enter** = yes (dialog stays open, Enter adds, **Esc** closes), **Esc** = no (closes after the first ToDo)
+- Quick-add via **Alt+D** (one ToDo: Enter adds and closes) or **Alt+Shift+D** (several: stays open, Enter adds, Esc closes)
 - Inline input via the **plus button** next to the title
 - **Checkbox** to mark a ToDo as done (greyed out)
 - **Right-click** a row to delete it
@@ -16,10 +16,10 @@ A tiny per-character ToDo list for World of Warcraft, styled after the Questie t
 
 | Command | Effect |
 | --- | --- |
-| `/todo` | Open the centered quick-add dialog |
+| `/todo` | Quick-add one ToDo (Enter adds and closes) |
+| `/todo multi` | Quick-add several ToDos (stays open until Esc) |
 | `/todo add <text>` | Add a new ToDo directly |
 | `/todo help` | Show the help listing in chat |
-| `/todo ask on\|off` | Toggle the *several ToDos?* prompt (off = always stays open like before) |
 | `/todo export on\|off` | Toggle the pixel export (default: on) |
 
 ## Installation
@@ -28,7 +28,7 @@ Install from CurseForge, or copy the `TodoTracker` folder into `World of Warcraf
 
 ## Key binding
 
-On first login the addon binds **Alt+D** to the quick-add dialog if that key is free. You can change it any time under *Key Bindings → AddOns → Todo Tracker*; manual changes are respected and never overwritten.
+On first login the addon binds **Alt+D** (one ToDo) and **Alt+Shift+D** (several ToDos) if those keys are free. You can change it any time under *Key Bindings → AddOns → Todo Tracker*; manual changes are respected and never overwritten.
 
 ## Saved data
 
