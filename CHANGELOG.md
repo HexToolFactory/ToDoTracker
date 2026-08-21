@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Pixel export steps aside automatically when the Companion Export addon is loaded (it carries the to-dos)
 - Pixel export v3: 4 brightness levels (base-4 digits) plus a 4-block grey calibration ramp – robust against display gain/HDR clipping (16 levels were not distinguishable on HDR screens)
 
 ## v1.1.0
