@@ -113,8 +113,11 @@ local function Render(payload)
 end
 
 local function Enabled()
-    -- Companion Export owns the strip when it is loaded (it includes the to-dos)
-    if IsAddOnLoaded and IsAddOnLoaded("CompanionExport") then return false end
+    -- Companion Export owns the strip when it is loaded (it includes the to-dos).
+    -- Check its frame: IsAddOnLoaded is C_AddOns.IsAddOnLoaded on newer clients.
+    if _G.CompanionExportFrame then return false end
+    local loaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
+    if loaded and loaded("CompanionExport") then return false end
     return TodoTrackerDB and TodoTrackerDB.export ~= false
 end
 
