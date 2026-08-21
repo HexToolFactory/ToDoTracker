@@ -8,4 +8,3 @@
 
 Bindings.xml
 TodoTracker.lua
-TodoTrackerExport.lua
