@@ -113,6 +113,8 @@ local function Render(payload)
 end
 
 local function Enabled()
+    -- Companion Export owns the strip when it is loaded (it includes the to-dos)
+    if IsAddOnLoaded and IsAddOnLoaded("CompanionExport") then return false end
     return TodoTrackerDB and TodoTrackerDB.export ~= false
 end
 
