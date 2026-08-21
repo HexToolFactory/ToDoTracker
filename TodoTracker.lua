@@ -258,18 +258,6 @@ local quickLabel = quickFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 quickLabel:SetPoint("TOPLEFT", 12, -8)
 quickLabel:SetText(GOLD .. "New ToDo" .. R)
 
--- Option: close the dialog right after Enter (default: stay open so several
--- ToDos can be entered in a row). Saved per character in DB.closeOnEnter.
-local closeCheck = CreateFrame("CheckButton", nil, quickFrame, "UICheckButtonTemplate")
-closeCheck:SetSize(20, 20)
-closeCheck:SetPoint("TOPRIGHT", -8, -4)
-closeCheck.text = closeCheck:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-closeCheck.text:SetPoint("RIGHT", closeCheck, "LEFT", -2, 0)
-closeCheck.text:SetText(GREY .. "close on Enter" .. R)
-closeCheck:SetScript("OnClick", function(self)
-    if DB then DB.closeOnEnter = self:GetChecked() and true or false end
-end)
-
 local quickEdit = CreateFrame("EditBox", nil, quickFrame, "InputBoxTemplate")
 quickEdit:SetHeight(20)
 quickEdit:SetPoint("TOPLEFT", 16, -24)
@@ -283,16 +271,16 @@ local function CloseQuickAdd()
     quickFrame:Hide()
 end
 
--- Enter adds the ToDo. By default the field is only cleared so several
--- ToDos can be entered in a row (Escape closes); with "close on Enter"
--- enabled the dialog closes immediately.
+-- Enter adds the ToDo. In "several" mode the field is only cleared so
+-- more ToDos can follow (Escape closes); in single mode the dialog closes.
+local multiMode = true
 quickEdit:SetScript("OnEnterPressed", function(self)
     local text = self:GetText():gsub("^%s+", ""):gsub("%s+$", "")
     if text ~= "" then AddTodo(text) end
-    if DB and DB.closeOnEnter then
-        CloseQuickAdd()
-    else
+    if multiMode then
         self:SetText("")
+    else
+        CloseQuickAdd()
     end
 end)
 quickEdit:SetScript("OnEscapePressed", CloseQuickAdd)
@@ -311,15 +299,62 @@ quickEdit:SetScript("OnChar", function(self)
     end
 end)
 
--- Global: called by the key binding (Bindings.xml)
-function TodoTracker_ShowQuickAdd()
-    if not DB then return end  -- not ready before ADDON_LOADED
-    closeCheck:SetChecked(DB.closeOnEnter and true or false)
+local function OpenQuickAdd(several)
+    multiMode = several and true or false
+    quickLabel:SetText(GOLD .. "New ToDo" .. R .. GREY ..
+        (multiMode and "  (Enter adds, Esc closes)" or "  (Enter adds & closes)") .. R)
     quickFrame:Show()
     quickEdit:SetText("")
     quickEdit:SetFocus()
     suppressChar = true
     C_Timer.After(0, function() suppressChar = false end)
+end
+
+-- Prompt before the quick-add: "several ToDos?" -- Enter = yes (stays
+-- open, Esc closes later), Esc = no (closes after the first ToDo).
+local promptFrame = CreateFrame("Frame", "TodoTrackerQuickPrompt", UIParent,
+    BackdropTemplateMixin and "BackdropTemplate")
+promptFrame:SetSize(320, 56)
+promptFrame:SetPoint("CENTER", 0, 150)
+promptFrame:SetFrameStrata("DIALOG")
+promptFrame:SetBackdrop({
+    bgFile = "Interface\\Buttons\\WHITE8X8",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true, edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+})
+promptFrame:SetBackdropColor(0, 0, 0, 0.85)
+promptFrame:SetBackdropBorderColor(1, 1, 1, 0.7)
+promptFrame:Hide()
+
+local promptTitle = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+promptTitle:SetPoint("TOPLEFT", 12, -10)
+promptTitle:SetText(GOLD .. "Add several ToDos in a row?" .. R)
+local promptHint = promptFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+promptHint:SetPoint("TOPLEFT", 12, -30)
+promptHint:SetText(WHITE .. "Enter" .. R .. GREY .. " = yes (close with Esc later)   " .. R ..
+    WHITE .. "Esc" .. R .. GREY .. " = no, just one" .. R)
+
+promptFrame:EnableKeyboard(true)
+promptFrame:SetScript("OnKeyDown", function(self, key)
+    if key == "ENTER" or key == "ESCAPE" then
+        self:SetPropagateKeyboardInput(false)
+        self:Hide()
+        OpenQuickAdd(key == "ENTER")
+    else
+        self:SetPropagateKeyboardInput(true)  -- e.g. movement keys pass through
+    end
+end)
+
+-- Global: called by the key binding (Bindings.xml) and /todo
+function TodoTracker_ShowQuickAdd()
+    if not DB then return end  -- not ready before ADDON_LOADED
+    if quickFrame:IsShown() then return end
+    if DB.askSeveral == false or InCombatLockdown() then
+        OpenQuickAdd(true)  -- no prompt: behave like before (stays open)
+    else
+        promptFrame:Show()
+    end
 end
 
 ------------------------------------------------------------------------
@@ -330,10 +365,10 @@ local function PrintHelp()
     line(GOLD .. "Todo Tracker" .. R .. GREY .. " -- commands & usage:" .. R)
     line(GOLD .. " - /todo add <text>" .. R .. WHITE .. " -- add a new ToDo" .. R)
     line(GOLD .. " - /todo" .. R .. WHITE .. " or " .. GOLD .. "Alt+D" .. R .. WHITE ..
-        " -- open the centered quick-add (Enter adds, Escape closes)" .. R)
+        " -- quick-add: first asks 'several?' (Enter = stays open until Esc, Esc = one and close)" .. R)
     line(GOLD .. " - /todo help" .. R .. WHITE .. " -- show this help" .. R)
-    line(GOLD .. " - /todo closeonenter on|off" .. R .. WHITE ..
-        " -- close the quick-add dialog right after Enter (default: stays open)" .. R)
+    line(GOLD .. " - /todo ask on|off" .. R .. WHITE ..
+        " -- ask 'several ToDos?' when opening the quick-add (Enter = yes, Esc = no)" .. R)
     line(GOLD .. " - /todo export on|off" .. R .. WHITE ..
         " -- pixel export for companion apps (top-left colour strip)" .. R)
     line(GREY .. " In the window:" .. R)
@@ -356,13 +391,13 @@ SlashCmdList["TODOTRACKER"] = function(msg)
         PrintHelp()
     elseif cmd == "add" and rest ~= "" then
         if DB then AddTodo(rest) end
-    elseif cmd == "closeonenter" then
+    elseif cmd == "ask" then
         if DB then
             rest = rest:lower()
-            if rest == "on" then DB.closeOnEnter = true
-            elseif rest == "off" then DB.closeOnEnter = false end
-            DEFAULT_CHAT_FRAME:AddMessage(GOLD .. "Todo Tracker" .. R .. WHITE .. " close quick-add on Enter: " ..
-                (DB.closeOnEnter and "|cFF00FF00on|r" or "|cFFFF4040off|r") .. R)
+            if rest == "on" then DB.askSeveral = true
+            elseif rest == "off" then DB.askSeveral = false end
+            DEFAULT_CHAT_FRAME:AddMessage(GOLD .. "Todo Tracker" .. R .. WHITE .. " ask 'several ToDos?' on open: " ..
+                (DB.askSeveral ~= false and "|cFF00FF00on|r" or "|cFFFF4040off|r") .. R)
         end
     elseif cmd == "" then
         TodoTracker_ShowQuickAdd()

@@ -5,7 +5,7 @@ A tiny per-character ToDo list for World of Warcraft, styled after the Questie t
 ## Features
 
 - Questie-tracker look: unobtrusive, highlights only on mouseover
-- Quick-add dialog via **Alt+D** (Enter adds and clears the field, Escape closes — or tick *close on Enter* in the dialog to close it right away)
+- Quick-add dialog via **Alt+D**: first asks *Add several ToDos in a row?* — **Enter** = yes (dialog stays open, Enter adds, **Esc** closes), **Esc** = no (closes after the first ToDo)
 - Inline input via the **plus button** next to the title
 - **Checkbox** to mark a ToDo as done (greyed out)
 - **Right-click** a row to delete it
@@ -19,7 +19,7 @@ A tiny per-character ToDo list for World of Warcraft, styled after the Questie t
 | `/todo` | Open the centered quick-add dialog |
 | `/todo add <text>` | Add a new ToDo directly |
 | `/todo help` | Show the help listing in chat |
-| `/todo closeonenter on\|off` | Close the quick-add dialog right after Enter (default: off, stays open) |
+| `/todo ask on\|off` | Toggle the *several ToDos?* prompt (off = always stays open like before) |
 | `/todo export on\|off` | Toggle the pixel export (default: on) |
 
 ## Installation
