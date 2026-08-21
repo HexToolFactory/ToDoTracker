@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Pixel export v2: 16-step calibration ramp before the data so readers can undo display gamma/HDR curves
+
 ## v1.1.0
 
 - Alt+D now adds a single ToDo (Enter adds and closes); new **Alt+Shift+D** / `/todo multi` keeps the dialog open for several ToDos (Esc closes)
