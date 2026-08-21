@@ -1,9 +1,9 @@
 # Changelog
 
-## Unreleased
+## v1.2.0
 
-- Pixel export steps aside automatically when the Companion Export addon is loaded (it carries the to-dos)
-- Pixel export v3: 4 brightness levels (base-4 digits) plus a 4-block grey calibration ramp – robust against display gain/HDR clipping (16 levels were not distinguishable on HDR screens)
+- Pixel export removed from Todo Tracker – the separate Companion Export addon now exports the to-do list (and more) for companion apps
+- `/todo export` command removed
 
 ## v1.1.0
 

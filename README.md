@@ -20,7 +20,6 @@ A tiny per-character ToDo list for World of Warcraft, styled after the Questie t
 | `/todo multi` | Quick-add several ToDos (stays open until Esc) |
 | `/todo add <text>` | Add a new ToDo directly |
 | `/todo help` | Show the help listing in chat |
-| `/todo export on\|off` | Toggle the pixel export (default: on) |
 
 ## Installation
 
@@ -34,6 +33,6 @@ On first login the addon binds **Alt+D** (one ToDo) and **Alt+Shift+D** (several
 
 ToDos and the window position are stored per character in `TodoTrackerDB` (SavedVariablesPerCharacter).
 
-## Pixel export (companion apps)
+## Companion apps
 
-WoW addons cannot write files while you play, so the current list is also rendered as a small strip of coloured blocks in the top-left screen corner (4×4 px blocks, 16 colour levels per channel, CRC-protected). External tools such as [WoW-Companion](https://github.com/HexToolFactory/wow-companion) read it via screen capture to sync your ToDos about once a minute without a `/reload`. Disable with `/todo export off` if you don't need it.
+Live export of the to-do list for companion apps (e.g. [WoW-Companion](https://github.com/HexToolFactory/wow-companion)) is handled by the separate [Companion Export](https://github.com/HexToolFactory/CompanionExport) addon, which reads `TodoTrackerDB` in game.

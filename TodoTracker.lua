@@ -334,8 +334,6 @@ local function PrintHelp()
     line(GOLD .. " - /todo help" .. R .. WHITE .. " -- show this help" .. R)
     line(GOLD .. " - /todo multi" .. R .. WHITE .. " or " .. GOLD .. "Alt+Shift+D" .. R .. WHITE ..
         " -- quick-add several ToDos in a row (stays open, Esc closes)" .. R)
-    line(GOLD .. " - /todo export on|off" .. R .. WHITE ..
-        " -- pixel export for companion apps (top-left colour strip)" .. R)
     line(GREY .. " In the window:" .. R)
     line(WHITE .. " - " .. GOLD .. "Plus button" .. R .. WHITE ..
         " next to the title -- inline input for adding" .. R)
