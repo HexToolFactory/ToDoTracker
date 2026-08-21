@@ -7,14 +7,17 @@
 --                      | nameLen(1) name | realmLen(1) realm | count(1)
 --                      | per todo: flags(1, bit0 = done) | textLen(1) | text
 -- Bytes are split into 4-bit nibbles; every block carries 3 nibbles as
--- R/G/B with 16 levels (0, 17, 34, ... 255) so colour management or HDR
--- cannot flip a value. Blocks are BLOCK_PX physical pixels wide/high.
+-- R/G/B with 16 levels. The strip starts with a CALIBRATION RAMP of 16
+-- grey blocks (level 0..15) so the reader can learn how the display/HDR
+-- gamma maps each level instead of assuming linear 0, 17, 34, ... 255.
+-- Blocks are BLOCK_PX physical pixels wide/high.
 
 local BLOCK_PX = 4         -- physical pixels per block
 local COLS = 128           -- blocks per row (512 px wide at BLOCK_PX = 4)
 local MAX_ROWS = 8
 local MAX_TEXT = 80        -- bytes per ToDo text
-local VERSION = 1
+local VERSION = 2          -- 2 = with calibration ramp
+local RAMP = 16            -- calibration blocks before the data
 local TICK = 1.0           -- seconds between change checks
 
 local exportFrame = CreateFrame("Frame", "TodoTrackerExportFrame", UIParent)
@@ -76,7 +79,7 @@ local function Render(payload)
         nibbles[#nibbles + 1] = bit.band(b, 0x0F)
     end
     while #nibbles % 3 ~= 0 do nibbles[#nibbles + 1] = 0 end
-    local nBlocks = #nibbles / 3
+    local nBlocks = RAMP + #nibbles / 3
     local rows = math.ceil(nBlocks / COLS)
     if rows > MAX_ROWS then return false end
     local size = BlockSize()
@@ -91,8 +94,13 @@ local function Render(payload)
         tex:ClearAllPoints()
         tex:SetPoint("TOPLEFT", exportFrame, "TOPLEFT", col * size, -row * size)
         tex:SetSize(size, size)
-        local n = (b - 1) * 3
-        tex:SetColorTexture(nibbles[n + 1] / 15, nibbles[n + 2] / 15, nibbles[n + 3] / 15, 1)
+        if b <= RAMP then
+            local g = (b - 1) / 15
+            tex:SetColorTexture(g, g, g, 1)      -- calibration ramp
+        else
+            local n = (b - RAMP - 1) * 3
+            tex:SetColorTexture(nibbles[n + 1] / 15, nibbles[n + 2] / 15, nibbles[n + 3] / 15, 1)
+        end
         tex:Show()
     end
     for b = nBlocks + 1, #textures do textures[b]:Hide() end
