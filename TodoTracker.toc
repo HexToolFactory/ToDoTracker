@@ -1,4 +1,4 @@
-## Interface: 20506
+## Interface: 20506, 16001
 ## Title: Todo Tracker
 ## Notes: Small ToDo list in the style of the Questie tracker (plus button or Alt+D to add)
 ## Author: HexToolFactory
@@ -6,5 +6,4 @@
 ## SavedVariablesPerCharacter: TodoTrackerDB
 ## X-Curse-Project-ID: 1644679
 
-Bindings.xml
 TodoTracker.lua

@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.1
+
+- Runs on WoW: Forever (interface 16001)
+- Bindings.xml is no longer listed in the TOC (the client loads it on its own; listing it caused "Unrecognized XML" warnings)
+
 ## v1.2.0
 
 - Pixel export removed from Todo Tracker – the separate Companion Export addon now exports the to-do list (and more) for companion apps
